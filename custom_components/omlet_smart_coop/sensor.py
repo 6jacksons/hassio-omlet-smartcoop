@@ -235,3 +235,74 @@ class CoopDoorFault(OmletBaseEntity, SensorEntity):
     @callback
     def _update_attr(self, device: Device) -> None:
         self._attr_native_value = device.state.door.fault
+
+
+class FeederLightLevel(OmletBaseEntity, SensorEntity):
+    """Representation of a Smart Feeder last update time."""
+
+    _attr_device_class = SensorDeviceClass.ILLUMINANCE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = LIGHT_LUX
+
+    def __init__(self, device, coordinator: CoopCoordinator) -> None:
+        """Initialize the device."""
+        self._attr_name = f"{device.name} Light Level"
+        super().__init__(device, coordinator, "light_level")
+
+    @callback
+    def _update_attr(self, device: Device) -> None:
+        self._attr_native_value = device.state.feeder.lightLevel
+
+
+class FeederOpenTime(OmletBaseEntity, SensorEntity):
+    """Representation of a Smart Feeder last open time."""
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:timer"
+
+    def __init__(self, device, coordinator: CoopCoordinator) -> None:
+        """Initialize the device."""
+        self._attr_name = f"{device.name} Last Open Time"
+        super().__init__(device, coordinator, "last_open_time")
+
+    @callback
+    def _update_attr(self, device: Device) -> None:
+        last_time = device.state.feeder.lastOpenTime
+        if isinstance(last_time, str):
+            strippedTime = datetime.strptime(last_time[:-6], "%Y-%m-%dT%H:%M:%S")
+            self._attr_native_value = dt_util.as_local(strippedTime)
+
+
+class FeederCloseTime(OmletBaseEntity, SensorEntity):
+    """Representation of a Smart Feeder last close time"""
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:timer"
+
+    def __init__(self, device, coordinator: CoopCoordinator) -> None:
+        """Initialize the device."""
+        self._attr_name = f"{device.name} Last Close Time"
+        super().__init__(device, coordinator, "last_close_time")
+
+    @callback
+    def _update_attr(self, device: Device) -> None:
+        # self.device = device
+        last_time = device.state.feeder.lastCloseTime
+        if isinstance(last_time, str):
+            strippedTime = datetime.strptime(last_time[:-6], "%Y-%m-%dT%H:%M:%S")
+            self._attr_native_value = dt_util.as_local(strippedTime)
+
+
+class FeederDoorFault(OmletBaseEntity, SensorEntity):
+    """Representation of a Smart Coop Feeder fault state."""
+
+    def __init__(self, device, coordinator: CoopCoordinator) -> None:
+        """Initialize the device."""
+        self._attr_name = f"{device.name} Feeder Fault"
+        super().__init__(device, coordinator, "feeder_fault")
+    
+    @callback
+    def _update_attr(self, device: Device) -> None:
+        self._attr_native_value = device.state.feeder.fault
