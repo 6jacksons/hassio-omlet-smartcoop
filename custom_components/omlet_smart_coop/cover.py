@@ -64,7 +64,10 @@ class CoopCover(OmletBaseEntity, CoverEntity):
 
     @callback
     def _update_attr(self, device: Device) -> None:
-        self.raw_state = device.state.door.state
+        if device.deviceType == "Autodoor":
+            self.raw_state = device.state.door.state
+        if device.deviceType == "Feeder":
+            self.raw_state = device.state.feeder.state
         if self.raw_state == "stopping":
             return
         self._attr_is_closed = self.raw_state == "closed"
