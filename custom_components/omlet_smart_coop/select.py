@@ -21,9 +21,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         if device.deviceType == "Autodoor":
             selects.append(CoopOpenMode(device, coordinator))
             selects.append(CoopCloseMode(device, coordinator))
-        if device.deviceType == "Feeder":
-            selects.append(FeederOpenMode(device, coordinator))
-            selects.append(FeederCloseMode(device, coordinator))
     async_add_entities(selects)
 
 
@@ -79,64 +76,6 @@ class CoopCloseMode(OmletBaseEntity, SelectEntity):
 
             # Update the device configuration
             device.configuration.door.closeMode = option
-            await self.coordinator.patch_config(device)
-
-            self._attr_current_option = option
-            self.async_write_ha_state()
-
-
-class FeederOpenMode(OmletBaseEntity, SelectEntity):
-    """Representation of a Smart Coop open mode select entity."""
-    _attr_entity_category = EntityCategory.CONFIG
-
-    _attr_options = [e.value for e in DOOR_MODES]
-
-    def __init__(self, device, coordinator: CoopCoordinator) -> None:
-        """Initialize the device."""
-        self._attr_name = f"{device.name} Open Mode"
-        super().__init__(device, coordinator, "open_mode")
-
-    @callback
-    def _update_attr(self, device: Device) -> None:
-        self._attr_current_option = device.configuration.feeder.openMode
-
-    async def async_select_option(self, option: str) -> None:
-        """Handle the selection of a new option."""
-        if option in self._attr_options:
-            # Retrieve the latest device data
-            device = self.coordinator.data[self.device_id]
-
-            # Update the device configuration
-            device.configuration.feeder.openMode = option
-            await self.coordinator.patch_config(device)
-
-            self._attr_current_option = option
-            self.async_write_ha_state()
-
-
-class FeederCloseMode(OmletBaseEntity, SelectEntity):
-    """Representation of a Smart Coop close mode select."""
-    _attr_entity_category = EntityCategory.CONFIG
-
-    _attr_options = [e.value for e in DOOR_MODES]
-
-    def __init__(self, device, coordinator: CoopCoordinator) -> None:
-        """Initialize the device."""
-        self._attr_name = f"{device.name} Close Mode"
-        super().__init__(device, coordinator, "close_mode")
-
-    @callback
-    def _update_attr(self, device: Device) -> None:
-        self._attr_current_option = device.configuration.feeder.closeMode
-
-    async def async_select_option(self, option: str) -> None:
-        """Handle the selection of a new option."""
-        if option in self._attr_options:
-            # Retrieve the latest device data
-            device = self.coordinator.data[self.device_id]
-
-            # Update the device configuration
-            device.configuration.feeder.closeMode = option
             await self.coordinator.patch_config(device)
 
             self._attr_current_option = option
