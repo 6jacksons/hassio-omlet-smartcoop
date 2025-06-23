@@ -18,10 +18,16 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
 
     timeInputs = []
     for device in coordinator.data.values():
-        timeInputs.append(CoopOpenTimeInput(device, coordinator))
-        timeInputs.append(CoopCloseTimeInput(device, coordinator))
+        if device.deviceType == "Autodoor":
+            timeInputs.append(CoopOpenTimeInput(device, coordinator))
+            timeInputs.append(CoopCloseTimeInput(device, coordinator))
+        if device.deviceType == "Feeder":
+            timeInputs.append(FeederOpenTimeInput(device, coordinator))
+            timeInputs.append(FeederCloseTimeInput(device, coordinator))
+        
         timeInputs.append(CoopOvernightSleepStartInput(device, coordinator))
         timeInputs.append(CoopOvernightSleepEndInput(device, coordinator))
+        
     async_add_entities(timeInputs)
 
 
@@ -113,3 +119,61 @@ class CoopOvernightSleepEndInput(CoopTimeInput):
 
     def _patch_config(self, device: Device, strTime):
         device.configuration.general.overnightSleepEnd = strTime
+
+
+class FeederTimeInput(OmletBaseEntity, Entity):
+    """Representation of a Smart Coop time input entity."""
+
+    @callback
+    def _update_attr(self, device: Device):
+        self._attr_state = device.configuration.feeder.openTime1
+
+    async def async_set_value(self, value: str):
+        """Set a new time value."""
+        device = self.coordinator.data[self.device_id]
+
+        str_value = value.strftime("%H:%M")
+        self._patch_config(device, str_value)
+        await self.coordinator.patch_config(device)
+
+        self._attr_state = value
+        self.async_write_ha_state()
+
+    @abstractmethod
+    def _patch_config(self, device: Device, strTime):
+        """Update the device configuration."""
+
+
+class FeederOpenTimeInput(FeederTimeInput):
+    """Representation of a Smart Coop Open time input entity."""
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, device: Device, coordinator) -> None:
+        """Initialize the device."""
+        self._attr_name = f"{device.name} Open Time"
+        super().__init__(device, coordinator, "open_time")
+
+    @callback
+    def _update_attr(self, device: Device):
+        self._attr_state = device.configuration.feeder.openTime1
+
+    def _patch_config(self, device: Device, strTime):
+        device.configuration.feeder.openTime1 = strTime
+
+
+class FeederCloseTimeInput(FeederTimeInput):
+    """Representation of a Smart Coop Close time input entity."""
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, device, coordinator) -> None:
+        """Initialize the device."""
+
+        self._attr_name = f"{device.name} Close Time"
+        super().__init__(device, coordinator, "close_time")
+
+    @callback
+    def _update_attr(self, device: Device):
+        self._attr_state = device.configuration.feeder.closeTime1
+
+    def _patch_config(self, device: Device, strTime):
+        device.configuration.feeder.closeTime1 = strTime
